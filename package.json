@@ -1,0 +1,21 @@
+{
+  "name": "typescript-examples",
+  "version": "1.0.0",
+  "description": "The examples while studying from webpages. Not a lecture.",
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node ./src/index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woni-d/typescript-examples.git"
+  },
+  "keywords": [],
+  "author": "Woni",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/woni-d/typescript-examples/issues"
+  },
+  "homepage": "https://github.com/woni-d/typescript-examples#readme"
+}
