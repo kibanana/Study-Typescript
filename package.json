@@ -4,7 +4,8 @@
   "description": "The examples while studying from webpages. Not a lecture.",
   "main": "index.ts",
   "scripts": {
-    "start": "ts-node ./src/index",
+    "preinstall": "npm i -g ts-node",
+    "start": "ts-node ./src/typeAliasInterface",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
