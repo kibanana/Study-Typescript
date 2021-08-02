@@ -56,15 +56,15 @@ type TIntersection = TBase & {
     t2: number;
 };
 
-interface I1 extends TIntersection {}
+interface I1 extends TIntersection {} // 곱 타입은 상속할 수 있다.
 
-class C1 implements TIntersection {
+class C1 implements TIntersection { // "
     constructor(public t: number, public t2: number) {}
 }
 
-interface I2 extends I1 {}
+interface I2 extends I1 {} // "
 
-class C2 implements I1 {
+class C2 implements I1 { // "
     constructor(public t: number, public t2: number) {}
 }
 
@@ -73,7 +73,7 @@ type TUnion = TBase | {
     u: number;
 }
 
-// interface I3 extends TUnion {}
+// interface I3 extends TUnion {} // 합 타입은 상속할 수 없다.
 // An interface can only extend an object type or intersection of object types with statically known members.
 
 // class C3 implements TUnion {}
