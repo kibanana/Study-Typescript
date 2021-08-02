@@ -572,3 +572,159 @@ console.log(bar); // false
 const baz = 0 ?? 12;
 console.log(baz); // 0
 ```
+
+## 모듈
+
+- 타입스크립트는 일반적인 변수나 함수, 클래스 뿐만 아니라 인터페이스나 타입 별칭도 모듈로 내보낼 수 있다.
+- 타입스크립트는 CommonJS/AMD/UMD 모듈을 위해 `export = ABC;` `import ABC = require('abc');` 와 같은 내보내기와 가져오기 문법을 제공한다. 이는 ES6 모듈의 export default 같이 하나의 모듈에서 하나의 객체만 내보내는 Default Export 기능을 제공한다.
+- 컴파일 옵션에 `"esModuleInterop": true` 를 제공하면 ES6 모듈의 Default Import 방식도 같이 사용할 수 있다.
+
+### 모듈의 타입 선언(Ambient module declaration)
+
+- 타입스크립트의 외부 자바스크립트 모듈 사용
+  - `npm install <package-name`>
+  - 가져오기(import) 단계에서 에러가 발생함
+    - -> 타임스크립트 컴파일러가 확인할 수 있는 모듈의 타입 선언(Ambient module declaration)
+- 모듈 구현과 타입 선언이 동시에 이뤄지는 타입스크립트와 달리, 구현만 존재하는 자바스크립트 모듈(E.g. Lodash)을 사용하는 경우, 컴파일러가 이해할 수 있는 모듈의 타입 선언이 필요하며, 이를 대부분 `.d.ts` 파일로 만들어 제공하게 된다.
+  - `lodash.d.ts`
+
+```typescript
+// lodash.d.ts
+
+// 모듈의 타입 선언(Ambient module declaration)
+declare module 'lodash' {
+  // 1. 타입(인터페이스) 선언
+  interface ILodash {
+    camelCase(str?: string): string
+  }
+
+  // 2. 타입(인터페이스)을 가지는 변수 선언
+  const _: ILodash;
+
+  // 3. 내보내기(CommonJS)
+  export = _;
+}
+```
+
+- 위 타입 선언이 컴파일 과정에 포함될 수 있도록 다음과 같이 `///`(삼중 슬래시 지시자, Triple-slash directive)를 사용하는 참조 태그(`<reference />`)와 `path` 속성을 사용한다.
+- 참조 태그의 특징
+  - 참조 태그로 가져오는 것은 모듈 구현이 아니라 타입 선언이기 때문에 `import` 키워드로 가져오지 않아야 한다.
+  - 삼중 슬래시 지시자는 자바스크립트로 컴파일되면 단순 주석이다.
+  - `path` 속성은 가져올 타입 선언의 상대 경로를 지정하며, 확장자를 꼭 입력해야 한다.
+  - `types` 속성은 `/// <reference types="lodash" />` 와 같이 모듈 이름을 지정해야 하며, 이는 컴파일 옵션 `typeRoots`와 Definitely Typed(`@types`)를 기준으로 한다.
+
+```typescript
+// 참조 태그(Triple-slash directive)
+/// <reference path="./lodash.d.ts" />
+
+import * as _ from 'lodash';
+
+console.log(_.camelCase('import lodash module'));
+```
+
+```
+ts-node main.ts
+```
+
+### Definitely Typed(@types)
+
+위에서 했던 것처럼 프로젝트에서 사용하는 모든 모듈에 대해 직접 타입 선언을 작성하는 것(타이핑, Typing)은 매우 비효율적이다. 그래서 우리는 여러 사용자들의 기여로 만들어진 Definitely Typed를 사용할 수 있다. 수많은 모듈의 타입이 정의되어 있으며, 지속적으로 추가되고 있다.
+
+- `npm install -D @types/<module-name>`
+- `npm info @types/<module-name>`
+
+- 타입 선언 모듈(`@types/<module-name>`)은 `node_modules/@types` 경로에 설치되며, 이 경로의 모든 타입 선언은 모듈 가져오기(Import)를 통해 컴파일에 자동으로 포함된다.
+
+### typeRoots와 types 옵션
+
+- 자바스크립트 모듈을 사용할 때 타입 선언을 고민하지 않아도 되는 상황
+  - 처음부터 타입스크립트로 작성된 모듈
+  - 타입 선언(`.d.ts` 파일 등)을 같이 제공하는 자바스크립트 모듈
+  - Definitely Typed(`@types/모듈`)에 타입 선언이 기여된 자바스크립트 모듈
+
+하지만 직접 타입 선언을 작성(타이핑, Typing)해야 하는 다음과 같은 상황도 있다.
+- 타입 선언을 찾을 수 없는 자바스크립트 모듈
+- 가지고 있는 타입 선언을 수정해야 하는 경우
+
+
+1. typeRoots 옵션을 테스트하기 위해, 새로운 프로젝트를 만들어 아래와 같이 Lodash를 설치하고 main.ts 파일을 생성
+2. `npm install lodash`
+3. ‘가져오기(Import)’ 단계에서 에러 발생
+
+    ```typescript
+    // main.ts
+
+    import * as _ from 'lodash'; // Error - TS2307: Cannot find module 'lodash'.
+
+    console.log(_.camelCase('import lodash module'));
+    ```
+
+4. `index.d.ts` 파일을 `types/lodash` 경로에 생성하고 `tsconfig.json` 파일 컴파일 옵션으로 `"typeRoots": ["./types"]` 를 제공한다.
+   1. `typeRoots` 옵션의 기본값은 `"typeRoots": ["./node_modules/@types"]`이다.
+   2. `typeRoots` 옵션은 지정된 경로에서 `index.d.ts` 파일을 우선 탐색한다.
+   3. `index.d.ts` 파일이 없다면 `package.json`의 types 혹은 typings 속성에 작성된 경로와 파일 이름을 탐색한다.
+   4. 타입 선언을 찾을 수 없으면 컴파일 오류가 발생한다.
+
+    ```typescript
+    // types/lodash/index.d.ts
+
+    declare module 'lodash' {
+      interface ILodash {
+        camelCase(str?: string): string
+      }
+      const _: ILodash;
+      export = _;
+    }
+    ```
+
+5. `ts-node main.ts`
+
+이렇게 typeRoots 옵션을 통해 types 디렉터리에서 여러 모듈의 타입 선언을 관리할 수 있으며,
+디렉터리 이름은 `types` 뿐만 아니라 `@types`, `_types`, `typings` 등 자유롭게 사용할 수 있다.
+
+추가로 컴파일러 옵션 `types`를 통해 화이트리스트(Whitelist) 방식으로 사용할 모듈 이름만을 작성할 수 있는데,
+`"types": ["lodash"]`로 작성하면 types 디렉터리에서 Lodash의 타입 선언만을 사용하며,
+`"types": []`로 작성하면 types 디렉터리의 모든 모듈의 타입 선언을 사용하지 않음을 의미하며,
+types 옵션을 사용하지 않으면 types 디렉터리의 모든 모듈의 타입 선언을 사용하게 된다.
+
+```typescript
+// tsconfig.json
+
+"typeRoots": ["./types"],
+"types": ["lodash"] // 일반적으로 작성할 필요 없는 types 옵션
+```
+
+## TS 유틸리티 타입
+
+- `Partial`	 TYPE의 모든 속성을 선택적으로 변경한 새로운 타입 반환 (인터페이스)
+  - \<TYPE>
+- `Required`	TYPE의 모든 속성을 필수로 변경한 새로운 타입 반환 (인터페이스)
+  - \<TYPE>
+- `Readonly`	TYPE의 모든 속성을 읽기 전용으로 변경한 새로운 타입 반환 (인터페이스)
+  - \<TYPE>
+- `Record`	KEY를 속성으로, TYPE를 그 속성값의 타입으로 지정하는 새로운 타입 반환 (인터페이스)
+  - \<KEY, TYPE>
+- `Pick`	TYPE에서 KEY로 속성을 선택한 새로운 타입 반환 (인터페이스)
+  - \<TYPE, KEY>
+- `Omit`	TYPE에서 KEY로 속성을 생략하고 나머지를 선택한 새로운 타입 반환 (인터페이스)
+  - \<TYPE, KEY>
+- `Exclude`	TYPE1에서 TYPE2를 제외한 새로운 타입 반환 (유니언)
+  - \<TYPE1, TYPE2>
+- `Extract`	TYPE1에서 TYPE2를 추출한 새로운 타입 반환 (유니언)
+  - \<TYPE1, TYPE2>
+- `NonNullable`	TYPE에서 null과 undefined를 제외한 새로운 타입 반환 (유니언)
+  - \<TYPE>
+- `Parameters`	TYPE의 매개변수 타입을 새로운 튜플 타입으로 반환 (함수, 튜플)
+  - \<TYPE>
+- `ConstructorParameters`	TYPE의 매개변수 타입을 새로운 튜플 타입으로 반환 (클래스, 튜플)
+  - \<TYPE>
+- `ReturnType`	TYPE의 반환 타입을 새로운 타입으로 반환 (함수)
+  - \<TYPE>
+- `InstanceType`	TYPE의 인스턴스 타입을 반환 (클래스)
+  - \<TYPE>
+- `ThisParameterType`	TYPE의 명시적 this 매개변수 타입을 새로운 타입으로 반환 (함수)
+  - \<TYPE>
+- `OmitThisParameter`	TYPE의 명시적 this 매개변수를 제거한 새로운 타입을 반환 (함수)
+  - \<TYPE>
+- `ThisType`	TYPE의 this 컨텍스트(Context)를 명시, 별도 반환 없음! (인터페이스)
+  - \<TYPE>
