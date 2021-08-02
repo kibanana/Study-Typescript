@@ -397,3 +397,178 @@ country = '러시아'; // Error - TS2322: Type '"러시아"' is not assignable t
 - 여러 호출 시그니처(함수 오버로드)의 경우 마지막 시그니처에서 추론
 
 [https://medium.com/@iamssen/typescript-%EC%97%90%EC%84%9C%EC%9D%98-%EA%B3%B5%EB%B3%80%EC%84%B1%EA%B3%BC-%EB%B0%98%EA%B3%B5%EB%B3%80%EC%84%B1-strictfunctiontypes-a82400e67f2]
+
+## 함수
+
+### this
+
+- 함수 내 `this`는 전역 객체를 참조하거나(sloppy mode), `undefined`(strict mode)가 되는 등 우리가 원하는 콘텍스트(context)를 잃고 다른 값이 되는 경우가 있다.
+
+```typescript
+const obj = {
+  a: 'Hello~',
+  b: function () {
+    console.log(this.a);
+  }
+};
+```
+
+```typescript
+obj.b(); // Hello~
+
+const b = obj.b;
+b(); // Cannot read property 'a' of undefined
+
+function someFn(cb: any) {
+  cb();
+}
+someFn(obj.b); // Cannot read property 'a' of undefined
+
+setTimeout(obj.b, 100); // undefined
+```
+
+위 예제와 같이 ‘호출하지 않는 메소드’를 사용(할당)하는 경우, this가 유효한 콘텍스트를 잃어버리고 a를 참조할 수 없게 된다.
+
+`this` 콘텍스트가 정상적으로 유지돼 `a` 속성을 참조할 수 있는 방법
+
+1. `bind` 메서드를 이용해 `this`를 직접 연결.
+2. 화살표 함수. 유효한 콘텍스트를 유지하며 메소드를 호출.
+
+만약 클래스의 메소드 멤버를 정의하는 경우, 프로토타입(Prototype) 메서드가 아닌 화살표 함수를 사용할 수 있다.
+
+여기서 주의할 점은 인스턴스를 생성할 때마다 개별적인 메서드가 만들어지게 되는데, 일반적인 메서드 호출에서의 화살표 함수 사용은 비효율적이지만 만약에 메서드를 주로 콜백으로 사용하는 경우엔 프로토타입의 새로운 클로져 호출보다 화살표 함수의 생성된 메서드 참조가 훨씬 효율적일 수 있다.
+
+### 명시적 this
+
+- `someCatFn` 함수 내 `this`가 캡처할 수 있는 `cat` 객체를 `call` 메소드를 통해 전달 및 실행했지만, 엄격 모드에서 `this`는 암시적인(implicitly) any 타입이기 때문에 에러가 발생한다.
+- ‘엄격 모드’는 컴파일러 옵션에서 `strict: true`(혹은 `noImplicitThis: true`)인 경우
+- 이 경우 this의 타입을 명시적으로(explicitly) 선언할 수 있다. -> 첫 번째 가짜(fake) 매개변수로 this를 선언한다.
+
+## 오버로드(Overloads)
+
+매개변수 타입과 반환 타입이 다른 여러 함수를 가질 수 있는 것
+
+함수 오버로드를 통해 다양한 구조의 함수를 생성하고 관리할 수 있다.
+
+주의점은 함수 선언부와 함수 구현부의 매개변수개수가 같아야 한다.
+
+함수 구현부에 `any`가 자주 사용된다.
+
+## 클래스
+
+클래스의 생성자 메서드(constructor)와 일반 메소드(methods) 멤버(class member)와는 다르게, 속성(properties)는 `name: string;`와 같이 클래스 바디(class body)에 별도로 타입을 선언한다(중괄호 {} 로 묶여 있는 영역이 클래스 바디).
+
+- 접근제어자(Access Modifiers): 클래스, 메서드 및 기타 멤버의 접근 가능성을 설정하는 객체 지향 언어 키워드
+  - public: 어디서나 자유롭게 접근 가능(생략 가능)
+  - protected: 나의 파생된 후손 클래스 내에서 접근 가능
+  - private: 내 클래스에서만 접근 가능
+
+- 수식어
+  - static: 정적으로 사용
+  - readonly: 읽기 전용으로 사용(속성에만 적용 가능)
+
+## 추상(Abstract) 클래스
+
+다른 클래스가 파생될 수 있는 기본 클래스로, 인터페이스와 굉장히 유사하다. `abstract`는 클래스뿐만 아니라 속성과 메소드에도 사용할 수 있다. 추상 클래스는 직접 인스턴스를 생성할 수 없기 때문에 파생된 후손 클래스에서 인스턴스를 생성해야 한다.
+
+추상 클래스가 인터페이스와 다른 점은 속성이나 메소드 멤버에 대한 세부 구현이 가능하다는 점이다.
+
+## Optional
+
+`?` 키워드
+
+- 타입을 선언할 땐 선택적 매개 변수(Optional Parameter)를 지정할 수 있다. -> `y?: number`
+- `?` 키워드 사용은 `| undefined`를 추가하는 것과 같다. -> `y: number | undefined`
+
+## 속성과 메서드(Properties and Methods)
+
+? 키워드를 속성(Properties)과 메소드(Methods) 타입 선언에도 사용할 수 있습니다.
+다음은 인터페이스 파트에서 살펴봤던 예제입니다.
+isAdult를 선택적 속성으로 선언하면서 더 이상 에러가 발생하지 않습니다.
+
+```typescript
+interface IUser {
+  name: string,
+  age: number,
+  isAdult?: boolean
+}
+
+let user1: IUser = {
+  name: 'Neo',
+  age: 123,
+  isAdult: true
+};
+
+let user2: IUser = {
+  name: 'Evan',
+  age: 456
+};
+```
+
+Type이나 Class에서도 사용할 수 있습니다.
+
+```typescript
+interface IUser {
+  name: string,
+  age: number,
+  isAdult?: boolean,
+  validate?(): boolean
+}
+type TUser = {
+  name: string,
+  age: number,
+  isAdult?: boolean,
+  validate?(): boolean
+}
+abstract class CUser {
+  abstract name: string;
+  abstract age: number;
+  abstract isAdult?: boolean;
+  abstract validate?(): boolean;
+}
+```
+
+## 선택적 체이닝(Optional Chaining)
+
+`?.` 연산자 사용
+
+```typescript
+// Error - TS2532: Object is possibly 'undefined'.
+function toString(str: string | undefined) {
+  return str.toString();
+}
+
+// Type Assertion
+function toString(str: string | undefined) {
+  return (str as string).toString();
+}
+
+// Optional Chaining
+function toString(str: string | undefined) {
+  return str?.toString();
+}
+```
+
+```typescript
+// Before
+if (foo && foo.bar && foo.bar.baz) {}
+
+// After-ish
+if (foo?.bar?.baz) {}
+```
+
+## Nullish 병합 연산자
+
+일반적으로 논리 연산자 `||`를 사용해 Falsy 체크(`0, "", NaN, null, undefined`를 확인)하는 경우가 많습니다.
+여기서 `0`이나 `""` 값을 유효 값으로 사용하는 경우 원치 않는 결과가 발생할 수 있는데, 이럴 때 유용한 Nullish 병합(Nullish Coalescing) 연산자 `??`를 타입스크립트에서 사용할 수 있습니다.
+
+```typescript
+const foo = null ?? 'Hello nullish.';
+console.log(foo); // Hello nullish.
+
+const bar = false ?? true;
+console.log(bar); // false
+
+const baz = 0 ?? 12;
+console.log(baz); // 0
+```
