@@ -361,3 +361,39 @@ country = '러시아'; // Error - TS2322: Type '"러시아"' is not assignable t
 ## 타입 별칭(Type Aliases)
 
 `type` 키워드를 사용해 새로운 타입 조합을 만들 수 있다. 일반적인 경우 둘 이상의 조합으로 구성하기 위해 유니온을 많이 사용한다.
+
+## 제네릭(Generic)
+
+제네릭은 재사용을 목적으로 함수나 클래스의 선언 시점이 아닌, **사용 시점**에 타입을 선언할 수 있는 방법을 제공한다.
+
+> 타입을 인수로 받아서 사용한다고 생각하면 쉽다.
+
+## 제약 조건(Constraints)
+
+인터페이스나 타입 별칭을 사용하는 제네릭을 작성할 수도 있다.
+
+`<T>` 형태로 작성하면 별도의 제약 조건이 없어서 모든 타입이 허용된다.
+
+만약 타입 변수 `T`가 `string`과 `number`인 경우만 허용하려면 `extends` 키워드를 사용하는 제약 조건을 추가할 수 있다.
+
+`T extends U`
+
+## 조건부 타입(Conditional Types)
+
+제약 조건과 다르게, **타입 구현** 영역에서 사용하는 `extends`는 삼항연산자(Conditional ternary operator)를 사용할 수 있다. 이를 조건부 타입이라고 한다.
+
+`T extends U ? X : Y`
+
+## Infer
+
+`infer` 키워드를 사용해 타입 변수의 타입 추론(Inference) 여부를 확인할 수 있다.
+
+`T extends infer U ? X : Y` // U 가 추론 가능한 타입이면 참, 아니면 거짓
+
+- infer 키워드는 제약 조건 extends가 아닌 조건부 타입 extends 절에서만 사용 가능
+- infer 키워드는 같은 타입 변수를 여러 위치에서 사용 가능
+- 일반적인 공변성(co-variant) 위치에선 유니언 타입으로 추론
+- 함수 인수인 반공변성(contra-variant) 위치에선 인터섹션 타입으로 추론
+- 여러 호출 시그니처(함수 오버로드)의 경우 마지막 시그니처에서 추론
+
+[https://medium.com/@iamssen/typescript-%EC%97%90%EC%84%9C%EC%9D%98-%EA%B3%B5%EB%B3%80%EC%84%B1%EA%B3%BC-%EB%B0%98%EA%B3%B5%EB%B3%80%EC%84%B1-strictfunctiontypes-a82400e67f2]
